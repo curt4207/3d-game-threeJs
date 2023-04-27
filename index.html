@@ -1,67 +1,108 @@
 <!DOCTYPE html>
-<!-- Three.js  Version Required 0.150.1-->
+<!-- NOTE: Three.js  Version Required 0.150.1-->
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Three.js</title>
-</head>
-<h1>hello</h1>
-<body>
+  </head>
+  <h1>hello</h1>
+  <body>
     <style>
-        body{
-            margin: 0px;
-        }
+      body {
+        margin: 0px;
+        overflow: hidden;
+      }
     </style>
 
-    <!--The Scripts below let me Importing Three.js directly into the HTML file-->
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <!-- NOTE:The Scripts below let me Importing Three.js directly into the HTML file-->
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+    ></script>
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
-            }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
         }
+      }
     </script>
     <script type="module">
-        import * as THREE from "three"
-        import { OrbitControls} from "three/addons/controls/OrbitControls.js"
-        
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
+      import * as THREE from "three";
+      // NOTE: OrbitControls give you move, click and scroll in and out controls
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-        const renderer = new THREE.WebGLRenderer()
-        renderer.setSize(window.innerWidth, window.innerHeight)
-        document.body.appendChild(renderer.domElement)
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-        const geometry = new THREE.BoxGeometry(1, 1, 1);// creates the shape 
-        const material = new THREE.MeshBasicMaterial({ color:  "#3AF91D" });
-        const shape = new THREE.Mesh(geometry, material);
+      const renderer = new THREE.WebGLRenderer();
+      renderer.shadowMap.enabled = true;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-        scene.add(shape);
+      const controls = new OrbitControls(camera, renderer.domElement);
 
-         // camera position
-        camera.position.z = 5;
+      // NOTE: Creates the Square
+      // NOTE: MeshBasicMaterial is the only one that doesn`t require a light
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const materialStandard = new THREE.MeshStandardMaterial({
+        color: "#0FF8FF",
+      });
+      const cube = new THREE.Mesh(geometry, materialStandard);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-            // shape.rotation.x += 0.01;
-            // shape.rotation.y += 0.01;
+      // NOTE: Set scene
+      cube.castShadow = true;
+      scene.add(cube);
 
-        };
+// Note: BoxGeometry (width, height, depth)
+     
+      const ground = new THREE.Mesh(
+      new  THREE.BoxGeometry(5, 0.5, 10),
+     new  THREE.MeshStandardMaterial({
+        color: 0x0000FF,
+      }));
 
-        animate();
+      // NOTE: Set scene position -y will be below main player, Set the ground to receiveShadow true
+      ground.position.y = -2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // NOTE: Lighting, DirectionalLight takes 2 values color and brightness
+      const light = new THREE.DirectionalLight(0xffffff, 3);
+
+      // NOTE: Set Scene Lighting and shadow true
+      light.position.y = 3;
+      light.position.z = 3;
+      light.castShadow = true;
+
+      scene.add(light);
 
 
+      // NOTE: Create Circle
+      // const geometrySphere = new THREE.SphereGeometry(1);
+      // const materialSphere = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      // const sphere = new THREE.Mesh(geometrySphere, materialSphere);
+
+      // scene.add(sphere);
+
+      // NOTE: Camera position higher number means the camera is farther away
+      camera.position.z = 6;
+
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        cube.rotation.x += 0.002;
+        cube.rotation.y += 0.01;
+      }
+
+      animate();
     </script>
-</body>
+  </body>
 </html>
