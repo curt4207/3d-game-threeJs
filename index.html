@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<!-- NOTE: Three.js  Version Required 0.150.1-->
+<!-- NOTE: Three.js  Version Required 0.150.1 
+  References: Chris Courses -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Three.js</title>
+    <title>My Three.js Project</title>
   </head>
-  <h1>hello</h1>
+  <h1>Project three.js Game</h1>
   <body>
     <style>
       body {
@@ -49,28 +50,149 @@
 
       const controls = new OrbitControls(camera, renderer.domElement);
 
+      // Box will inherit all the properties of THREE.Mesh
+      class Box extends THREE.Mesh {
+        constructor({
+          width,
+          height,
+          depth,
+          color = "#9628C5",
+          velocity = {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          position = {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+        }) {
+          //Super method Calls the constructor of the Parent class THREE.Mesh
+          super(
+            new THREE.BoxGeometry(width, height, depth),
+            new THREE.MeshStandardMaterial({
+              color,
+            })
+          );
+
+          this.width = width;
+          this.height = height;
+          this.depth = depth;
+          this.color = color;
+
+          this.position.set(position.x, position.y, position.z);
+
+          // NOTE: To find center/ Give the shape Left and Right for collision detection
+          this.right = this.position.x + this.width / 2;
+          this.left = this.position.x - this.width / 2;
+
+          // NOTE: Give the shape top and bottom/ To find center collision detection
+          this.top = this.position.y + this.height / 2;
+          this.bottom = this.position.y - this.height / 2;
+
+          // NOTE:Front and back face are z axis for depth
+          this.front = this.position.z + this.depth / 2;
+          this.back = this.position.z - this.depth / 2;
+
+          this.velocity = velocity;
+          this.gravity = -0.003;
+        }
+
+        updateSides() {
+          this.right = this.position.x + this.width / 2;
+          this.left = this.position.x - this.width / 2;
+
+          // NOTE:Update on every frame, top and bottom
+          this.top = this.position.y + this.height / 2;
+          this.bottom = this.position.y - this.height / 2;
+
+          // NOTE:Front and back face are z axis for depth
+          this.front = this.position.z + this.depth / 2;
+          this.back = this.position.z - this.depth / 2;
+        }
+
+        update(ground) {
+          this.updateSides();
+
+          this.position.x += this.velocity.x;
+          this.position.z += this.velocity.z;
+
+          // NOTE: Detect collision on the x axis if the right side of the shape meets the left side of where the ground ends or right side of shape meets left side of where the ground ends.
+
+          // NOTE: Compare If the Right side of the player is Greater than or Equal to the Left side of the ground. Add a console.log that will count until player crosses the edge of the ground.
+
+         
+          this.applyGravity(ground);
+        }
+        applyGravity(ground) {
+          // NOTE: Conditional to stop Cube from passing thought the ground
+          // (this.velocity.y *= 0.8) Will make the box come to a stop creating the effect of friction
+          // NOTE: Update velocity
+          this.velocity.y += this.gravity;
+
+          if (boxCollision({
+            box1: this,
+            box2: ground,
+          })) {
+            this.velocity.y *= 0.8;
+            this.velocity.y = -this.velocity.y;
+          } else {
+            this.position.y += this.velocity.y;
+          }
+        }
+      }
+
+      function boxCollision({
+        box1,
+        box2,
+      }){
+        const zCollision = box1.front >= box2.back && box1.back <= box2.front;
+          const xCollision = box1.right >= box2.left && box1.left <= box2.right;
+          const yCollision = box1.bottom + box1.velocity.y <= box2.top && box1.top >= box2.bottom;
+
+        return  xCollision && yCollision && zCollision;
+
+      }
+
       // NOTE: Creates the Square
       // NOTE: MeshBasicMaterial is the only one that doesn`t require a light
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const materialStandard = new THREE.MeshStandardMaterial({
-        color: "#0FF8FF",
+      // const geometry = new THREE.BoxGeometry(1, 1, 1);
+      // const materialStandard = new THREE.MeshStandardMaterial({
+      //   color: "#0FF8FF",
+      // });
+
+      // NOTE: Subtract the (cube.position.y - cube.height /2) to get the bottom of the cube
+      const cube = new Box({
+        width: 1,
+        height: 1,
+        depth: 1,
+        velocity: {
+          x: 0,
+          y: -0.08,
+          z: 0,
+        },
       });
-      const cube = new THREE.Mesh(geometry, materialStandard);
 
       // NOTE: Set scene
       cube.castShadow = true;
       scene.add(cube);
 
-// Note: BoxGeometry (width, height, depth)
-     
-      const ground = new THREE.Mesh(
-      new  THREE.BoxGeometry(5, 0.5, 10),
-     new  THREE.MeshStandardMaterial({
-        color: 0x0000FF,
-      }));
+      // Note: BoxGeometry (width, height, depth)
+      const ground = new Box({
+        width: 5,
+        height: 0.5,
+        depth: 25,
+        color: "#B5BA06",
+        position: {
+          x: 0,
+          y: -2,
+          z: 0,
+        },
+      });
 
       // NOTE: Set scene position -y will be below main player, Set the ground to receiveShadow true
-      ground.position.y = -2;
+      // ground.position.y = -2;
       ground.receiveShadow = true;
       scene.add(ground);
 
@@ -84,7 +206,6 @@
 
       scene.add(light);
 
-
       // NOTE: Create Circle
       // const geometrySphere = new THREE.SphereGeometry(1);
       // const materialSphere = new THREE.MeshBasicMaterial({ color: 0xff00ff });
@@ -95,11 +216,119 @@
       // NOTE: Camera position higher number means the camera is farther away
       camera.position.z = 6;
 
+      const keys = {
+        a: {
+          pressed: false,
+        },
+        d: {
+          pressed: false,
+        },
+        s: {
+          pressed: false,
+        },
+        w: {
+          pressed: false,
+        },
+        ArrowUp: {
+          pressed: false,
+        },
+        ArrowRight: {
+          pressed: false,
+        },
+        ArrowDown: {
+          pressed: false,
+        },
+        ArrowLeft: {
+          pressed: false,
+        },
+      };
+
+      // NOTE: EventListener Keydown
+      window.addEventListener("keydown", (event) => {
+        switch (event.code) {
+          case "KeyA":
+            keys.a.pressed = true;
+            break;
+          case "KeyD":
+            keys.d.pressed = true;
+            break;
+          case "KeyS":
+            keys.s.pressed = true;
+            break;
+          case "KeyW":
+            keys.w.pressed = true;
+            break;
+
+          case "ArrowLeft":
+            keys.ArrowLeft.pressed = true;
+            break;
+          case "ArrowRight":
+            keys.ArrowRight.pressed = true;
+            break;
+          case "ArrowDown":
+            keys.ArrowDown.pressed = true;
+            break;
+          case "ArrowUp":
+            keys.ArrowUp.pressed = true;
+            break;
+        }
+      });
+      // NOTE: EventListener keyup
+      window.addEventListener("keyup", (event) => {
+        switch (event.code) {
+          case "KeyA":
+            keys.a.pressed = false;
+            break;
+          case "KeyD":
+            keys.d.pressed = false;
+            break;
+          case "KeyS":
+            keys.s.pressed = false;
+            break;
+          case "KeyW":
+            keys.w.pressed = false;
+            break;
+
+          case "ArrowLeft":
+            keys.ArrowLeft.pressed = false;
+            break;
+          case "ArrowRight":
+            keys.ArrowRight.pressed = false;
+            break;
+          case "ArrowDown":
+            keys.ArrowDown.pressed = false;
+            break;
+          case "ArrowUp":
+            keys.ArrowUp.pressed = false;
+            break;
+        }
+      });
+
+      // Set the Player/cube movement speed
+      const movementSpeed = 0.05;
+
+      // NOTE: Animate function
       function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
-        cube.rotation.x += 0.002;
-        cube.rotation.y += 0.01;
+
+        // Code for Movement
+        cube.velocity.x = 0;
+        cube.velocity.z = 0;
+
+        // NOTE: was&d keys
+        if (keys.a.pressed) cube.velocity.x = -movementSpeed;
+        else if (keys.d.pressed) cube.velocity.x = movementSpeed;
+        if (keys.s.pressed) cube.velocity.z = movementSpeed;
+        else if (keys.w.pressed) cube.velocity.z = -movementSpeed;
+        // NOTE: Arrow keys
+
+        if (keys.ArrowLeft.pressed) cube.velocity.x = -movementSpeed;
+        else if (keys.ArrowRight.pressed) cube.velocity.x = movementSpeed;
+        if (keys.ArrowDown.pressed) cube.velocity.z = movementSpeed;
+        else if (keys.ArrowUp.pressed) cube.velocity.z = -movementSpeed;
+
+        cube.update(ground);
       }
 
       animate();
